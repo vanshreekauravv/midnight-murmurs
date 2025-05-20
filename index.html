@@ -8,10 +8,10 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- 🔐 SECRET CODE LOCKSCREEN -->
+  <!-- Secret Lock -->
   <script>
     const secret = localStorage.getItem("loveKey") || prompt("💘 What’s the secret code, babe?");
-    if (secret !== "moonheart2904") {
+    if (secret !== "moonheart456") {
       alert("💔 Wrong code. Access denied.");
       document.body.innerHTML = "";
     } else {
@@ -19,17 +19,20 @@
     }
   </script>
 
+  <!-- Theme Toggle -->
+  <button id="theme-toggle">🌓</button>
+
   <div class="container">
     <h1>Midnight Murmurs 🌌</h1>
 
-    <!-- LOGIN SECTION -->
+    <!-- Login -->
     <div id="auth-section">
       <input type="email" id="login-email" placeholder="Your email" />
       <input type="password" id="login-password" placeholder="Password" />
       <button id="login-btn">🔐 Login / Signup</button>
     </div>
 
-    <!-- CHAT SECTION -->
+    <!-- Chat -->
     <div id="chat-section" style="display: none;">
       <div id="chat-box" class="chat-box"></div>
       <form id="message-form">
@@ -59,16 +62,20 @@
     const logoutBtn = document.getElementById('logout-btn');
 
     let senderName = localStorage.getItem('mm_name');
+    if (!senderName) {
+      senderName = prompt("Your display name?");
+      localStorage.setItem('mm_name', senderName);
+    }
 
     loginBtn.addEventListener('click', async () => {
       const email = document.getElementById('login-email').value.trim();
       const password = document.getElementById('login-password').value.trim();
-      if (!email || !password) return alert("Fill in both fields!");
+      if (!email || !password) return alert("Enter both email & password!");
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        const { error: signUpError } = await supabase.auth.signUp({ email, password });
-        if (signUpError) return alert("Login/Signup failed: " + signUpError.message);
+        const { error: signupErr } = await supabase.auth.signUp({ email, password });
+        if (signupErr) return alert("Error: " + signupErr.message);
       }
       initChat();
     });
@@ -85,19 +92,24 @@
       authSection.style.display = 'none';
       chatSection.style.display = 'block';
 
-      if (!senderName) {
-        senderName = prompt("What’s your name, love?");
-        localStorage.setItem('mm_name', senderName);
-      }
-
       loadMessages();
       setupRealtime();
+    }
+
+    function emojiify(text) {
+      return text
+        .replace(/:heart:/g, "❤️")
+        .replace(/:kiss:/g, "😘")
+        .replace(/:star:/g, "⭐")
+        .replace(/:fire:/g, "🔥")
+        .replace(/:moon:/g, "🌙")
+        .replace(/:hug:/g, "🤗");
     }
 
     function displayMessage(msg) {
       const div = document.createElement('div');
       const isMine = msg.name === senderName;
-      const senderLabel = isMine ? "You" : msg.name || "Anonymous";
+      const senderLabel = isMine ? "🧑‍💻 You" : `💌 ${msg.name}`;
       div.className = isMine ? "message you" : "message them";
 
       const hasMedia = msg.text.includes('[media]');
@@ -112,16 +124,21 @@
         }
 
         const textPart = msg.text.split('[media]')[0].trim();
-        if (textPart) {
-          html = `<strong>${senderLabel}:</strong> ${textPart}<br>` + html;
-        }
+        if (textPart) html = `<strong>${senderLabel}:</strong> ${emojiify(textPart)}<br>` + html;
       } else {
-        html += msg.text;
+        html += emojiify(msg.text);
       }
 
       div.innerHTML = html;
       chatBox.appendChild(div);
       chatBox.scrollTop = chatBox.scrollHeight;
+
+      // 🔔 Notification
+      if (!document.hasFocus() && !isMine) {
+        new Notification(`New message from ${msg.name}`, {
+          body: msg.text.slice(0, 60),
+        });
+      }
     }
 
     async function loadMessages() {
@@ -171,15 +188,10 @@
         ? (text ? `${text} [media](${fileUrl})` : `[media](${fileUrl})`)
         : text;
 
-      const { error } = await supabase.from('messages').insert([
-        { text: finalMessage, name: senderName }
-      ]);
+      await supabase.from('messages').insert([{ text: finalMessage, name: senderName }]);
 
-      if (!error) {
-        input.value = '';
-        fileInput.value = '';
-        loadMessages();
-      }
+      input.value = '';
+      fileInput.value = '';
     });
 
     function setupRealtime() {
@@ -202,6 +214,30 @@
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) initChat();
+    });
+
+    // 🔔 Ask notification permission
+    if (Notification.permission !== 'granted') {
+      Notification.requestPermission();
+    }
+
+    // 🌌 Dynamic background
+    const backgrounds = [
+      'url("https://images.unsplash.com/photo-1503264116251-35a269479413?auto=format&fit=crop&w=1950&q=80")',
+      'url("https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1950&q=80")',
+      'url("https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1950&q=80")',
+      'url("https://images.unsplash.com/photo-1549887534-4e7a90d0a56a?auto=format&fit=crop&w=1950&q=80")'
+    ];
+    let index = 0;
+    setInterval(() => {
+      document.body.style.backgroundImage = backgrounds[index % backgrounds.length];
+      index++;
+    }, 5000);
+
+    // 🌗 Theme toggle
+    const themeToggle = document.getElementById("theme-toggle");
+    themeToggle.addEventListener("click", () => {
+      document.body.classList.toggle("day-mode");
     });
   </script>
 </body>
