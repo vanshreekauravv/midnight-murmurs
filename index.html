@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Midnight Murmurs 💌</title>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Quicksand&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- 🔐 SECRET CODE LOCKSCREEN -->
+  <script>
+    const secret = localStorage.getItem("loveKey") || prompt("💘 What’s the secret code, babe?");
+    if (secret !== "moonheart2904") {
+      alert("💔 Wrong code. Access denied.");
+      document.body.innerHTML = "";
+    } else {
+      localStorage.setItem("loveKey", secret);
+    }
+  </script>
+
+  <div class="container">
+    <h1>Midnight Murmurs 🌌</h1>
+
+    <!-- LOGIN SECTION -->
+    <div id="auth-section">
+      <input type="email" id="login-email" placeholder="Your email" />
+      <input type="password" id="login-password" placeholder="Password" />
+      <button id="login-btn">🔐 Login / Signup</button>
+    </div>
+
+    <!-- CHAT SECTION -->
+    <div id="chat-section" style="display: none;">
+      <div id="chat-box" class="chat-box"></div>
+      <form id="message-form">
+        <input type="text" id="message-input" placeholder="Whisper something sweet..." />
+        <input type="file" id="file-input" accept="image/*,audio/*" />
+        <button type="submit">💬 Send</button>
+      </form>
+      <button id="logout-btn">🚪 Logout</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+    const supabase = createClient(
+      'https://igtujbdtcaixjwffwsti.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlndHVqYmR0Y2FpeGp3ZmZ3c3RpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3NTY4NjcsImV4cCI6MjA2MzMzMjg2N30.ppv_c3Q5-9YaUBXUfw-dHEHKEfzDnhCjfXMqW2Fme1A'
+    );
+
+    const authSection = document.getElementById('auth-section');
+    const chatSection = document.getElementById('chat-section');
+    const chatBox = document.getElementById('chat-box');
+    const form = document.getElementById('message-form');
+    const input = document.getElementById('message-input');
+    const fileInput = document.getElementById('file-input');
+    const loginBtn = document.getElementById('login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+
+    let senderName = localStorage.getItem('mm_name');
+
+    loginBtn.addEventListener('click', async () => {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value.trim();
+      if (!email || !password) return alert("Fill in both fields!");
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        const { error: signUpError } = await supabase.auth.signUp({ email, password });
+        if (signUpError) return alert("Login/Signup failed: " + signUpError.message);
+      }
+      initChat();
+    });
+
+    logoutBtn.addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      location.reload();
+    });
+
+    async function initChat() {
+      const session = await supabase.auth.getSession();
+      if (!session.data.session) return;
+
+      authSection.style.display = 'none';
+      chatSection.style.display = 'block';
+
+      if (!senderName) {
+        senderName = prompt("What’s your name, love?");
+        localStorage.setItem('mm_name', senderName);
+      }
+
+      loadMessages();
+      setupRealtime();
+    }
+
+    function displayMessage(msg) {
+      const div = document.createElement('div');
+      const isMine = msg.name === senderName;
+      const senderLabel = isMine ? "You" : msg.name || "Anonymous";
+      div.className = isMine ? "message you" : "message them";
+
+      const hasMedia = msg.text.includes('[media]');
+      let html = `<strong>${senderLabel}:</strong> `;
+
+      if (hasMedia) {
+        const mediaUrl = msg.text.match(/\[media\]\((.*?)\)/)?.[1];
+        if (mediaUrl?.endsWith('.mp3') || mediaUrl?.endsWith('.wav')) {
+          html += `<audio controls src="${mediaUrl}" style="margin-top: 8px;"></audio>`;
+        } else {
+          html += `<img src="${mediaUrl}" style="max-width: 100%; margin-top: 8px; border-radius: 8px;" />`;
+        }
+
+        const textPart = msg.text.split('[media]')[0].trim();
+        if (textPart) {
+          html = `<strong>${senderLabel}:</strong> ${textPart}<br>` + html;
+        }
+      } else {
+        html += msg.text;
+      }
+
+      div.innerHTML = html;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    async function loadMessages() {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .order('timestamp', { ascending: true });
+
+      if (error) {
+        console.error('Error loading messages:', error.message);
+        return;
+      }
+
+      chatBox.innerHTML = '';
+
+      const nowIST = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+      const now = new Date(nowIST);
+
+      data.forEach(msg => {
+        const msgTime = new Date(new Date(msg.timestamp).toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+        const hoursDiff = (now - msgTime) / (1000 * 60 * 60);
+        if (hoursDiff <= 24) displayMessage(msg);
+      });
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const text = input.value.trim();
+      const file = fileInput.files[0];
+      let fileUrl = null;
+
+      if (file) {
+        const filePath = `${Date.now()}_${file.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from('media')
+          .upload(filePath, file, { upsert: true });
+
+        if (!uploadError) {
+          const { data } = supabase.storage.from('media').getPublicUrl(filePath);
+          fileUrl = data.publicUrl;
+        }
+      }
+
+      if (!text && !fileUrl) return;
+
+      const finalMessage = fileUrl
+        ? (text ? `${text} [media](${fileUrl})` : `[media](${fileUrl})`)
+        : text;
+
+      const { error } = await supabase.from('messages').insert([
+        { text: finalMessage, name: senderName }
+      ]);
+
+      if (!error) {
+        input.value = '';
+        fileInput.value = '';
+        loadMessages();
+      }
+    });
+
+    function setupRealtime() {
+      supabase
+        .channel('messages_channel')
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'messages' },
+          (payload) => {
+            const msg = payload.new;
+            const nowIST = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+            const now = new Date(nowIST);
+            const msgTime = new Date(new Date(msg.timestamp).toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+            const hoursDiff = (now - msgTime) / (1000 * 60 * 60);
+            if (hoursDiff <= 24) displayMessage(msg);
+          }
+        )
+        .subscribe();
+    }
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) initChat();
+    });
+  </script>
+</body>
+</html>
