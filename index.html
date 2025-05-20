@@ -3,12 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Midnight Murmurs 💌</title>
+  <title>Midnight Murmurs 🌌</title>
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Quicksand&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Secret Lock -->
   <script>
     const secret = localStorage.getItem("loveKey") || prompt("💘 What’s the secret code, babe?");
     if (secret !== "moonheart456") {
@@ -19,20 +18,15 @@
     }
   </script>
 
-  <!-- Theme Toggle -->
-  <button id="theme-toggle">🌓</button>
-
   <div class="container">
     <h1>Midnight Murmurs 🌌</h1>
 
-    <!-- Login -->
     <div id="auth-section">
       <input type="email" id="login-email" placeholder="Your email" />
       <input type="password" id="login-password" placeholder="Password" />
       <button id="login-btn">🔐 Login / Signup</button>
     </div>
 
-    <!-- Chat -->
     <div id="chat-section" style="display: none;">
       <div id="chat-box" class="chat-box"></div>
       <form id="message-form">
@@ -63,14 +57,14 @@
 
     let senderName = localStorage.getItem('mm_name');
     if (!senderName) {
-      senderName = prompt("Your display name?");
+      senderName = prompt("Your name?");
       localStorage.setItem('mm_name', senderName);
     }
 
     loginBtn.addEventListener('click', async () => {
       const email = document.getElementById('login-email').value.trim();
       const password = document.getElementById('login-password').value.trim();
-      if (!email || !password) return alert("Enter both email & password!");
+      if (!email || !password) return alert("Enter both!");
 
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
@@ -118,9 +112,9 @@
       if (hasMedia) {
         const mediaUrl = msg.text.match(/\[media\]\((.*?)\)/)?.[1];
         if (mediaUrl?.endsWith('.mp3') || mediaUrl?.endsWith('.wav')) {
-          html += `<audio controls src="${mediaUrl}" style="margin-top: 8px;"></audio>`;
+          html += `<audio controls src="${mediaUrl}"></audio>`;
         } else {
-          html += `<img src="${mediaUrl}" style="max-width: 100%; margin-top: 8px; border-radius: 8px;" />`;
+          html += `<img src="${mediaUrl}" style="max-width: 100%; border-radius: 8px;" />`;
         }
 
         const textPart = msg.text.split('[media]')[0].trim();
@@ -133,7 +127,6 @@
       chatBox.appendChild(div);
       chatBox.scrollTop = chatBox.scrollHeight;
 
-      // 🔔 Notification
       if (!document.hasFocus() && !isMine) {
         new Notification(`New message from ${msg.name}`, {
           body: msg.text.slice(0, 60),
@@ -216,29 +209,23 @@
       if (session) initChat();
     });
 
-    // 🔔 Ask notification permission
     if (Notification.permission !== 'granted') {
       Notification.requestPermission();
     }
 
-    // 🌌 Dynamic background
+    // 🌌 Backgrounds: DARK ONLY
     const backgrounds = [
+      'url("https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1950&q=80")',
       'url("https://images.unsplash.com/photo-1503264116251-35a269479413?auto=format&fit=crop&w=1950&q=80")',
       'url("https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1950&q=80")',
-      'url("https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1950&q=80")',
-      'url("https://images.unsplash.com/photo-1549887534-4e7a90d0a56a?auto=format&fit=crop&w=1950&q=80")'
+      'url("https://images.unsplash.com/photo-1549887534-4e7a90d0a56a?auto=format&fit=crop&w=1950&q=80")',
+      'url("https://images.unsplash.com/photo-1535223289827-42f1e9919769?auto=format&fit=crop&w=1950&q=80")'
     ];
     let index = 0;
     setInterval(() => {
       document.body.style.backgroundImage = backgrounds[index % backgrounds.length];
       index++;
     }, 5000);
-
-    // 🌗 Theme toggle
-    const themeToggle = document.getElementById("theme-toggle");
-    themeToggle.addEventListener("click", () => {
-      document.body.classList.toggle("day-mode");
-    });
   </script>
 </body>
 </html>
