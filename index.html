@@ -8,25 +8,35 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+
+  <!-- 🔐 Passcode Protection -->
   <script>
-    const secret = localStorage.getItem("loveKey") || prompt("💘 What’s the secret code, babe?");
-    if (secret !== "moonhearts2904") {
+    const code = localStorage.getItem("loveKey") || prompt("💘 Enter your secret code:");
+    if (code !== "moonhearts2904") {
       alert("💔 Wrong code. Access denied.");
       document.body.innerHTML = "";
     } else {
-      localStorage.setItem("loveKey", secret);
+      localStorage.setItem("loveKey", code);
     }
   </script>
+
+  <!-- 🔄 Reset Passcode Button -->
+  <button id="reset-passcode" onclick="localStorage.removeItem('loveKey'); location.reload();">🔁 Reset Code</button>
 
   <div class="container">
     <h1>Midnight Murmurs 🌌</h1>
 
+    <!-- AUTH -->
     <div id="auth-section">
       <input type="email" id="login-email" placeholder="Your email" />
       <input type="password" id="login-password" placeholder="Password" />
-      <button id="login-btn">🔐 Login / Signup</button>
+      <div class="button-group">
+        <button id="login-btn">🔐 Login</button>
+        <button id="signup-btn">🆕 Signup</button>
+      </div>
     </div>
 
+    <!-- CHAT -->
     <div id="chat-section" style="display: none;">
       <div id="chat-box" class="chat-box"></div>
       <form id="message-form">
@@ -38,6 +48,7 @@
     </div>
   </div>
 
+  <!-- ✨ Supabase Chat Script -->
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
@@ -53,24 +64,40 @@
     const input = document.getElementById('message-input');
     const fileInput = document.getElementById('file-input');
     const loginBtn = document.getElementById('login-btn');
+    const signupBtn = document.getElementById('signup-btn');
     const logoutBtn = document.getElementById('logout-btn');
 
     let senderName = localStorage.getItem('mm_name');
     if (!senderName) {
-      senderName = prompt("Your name?");
+      senderName = prompt("What's your name?");
       localStorage.setItem('mm_name', senderName);
     }
+
+    const allowedEmails = ['vanshreekauravv07@gmail.com', 'Omsonare03@gmail.com'];
 
     loginBtn.addEventListener('click', async () => {
       const email = document.getElementById('login-email').value.trim();
       const password = document.getElementById('login-password').value.trim();
-      if (!email || !password) return alert("Enter both!");
+
+      if (!email || !password) return alert("Enter both fields.");
+      if (!allowedEmails.includes(email)) return alert("❌ Access denied: Not an allowed user.");
 
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        const { error: signupErr } = await supabase.auth.signUp({ email, password });
-        if (signupErr) return alert("Error: " + signupErr.message);
-      }
+      if (error) return alert("Login failed: " + error.message);
+
+      initChat();
+    });
+
+    signupBtn.addEventListener('click', async () => {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value.trim();
+
+      if (!email || !password) return alert("Enter both fields.");
+      if (!allowedEmails.includes(email)) return alert("❌ Signup blocked: You’re not on the lovers list.");
+
+      const { error } = await supabase.auth.signUp({ email, password });
+      if (error) return alert("Signup failed: " + error.message);
+
       initChat();
     });
 
@@ -106,17 +133,15 @@
       const senderLabel = isMine ? "🧑‍💻 You" : `💌 ${msg.name}`;
       div.className = isMine ? "message you" : "message them";
 
-      const hasMedia = msg.text.includes('[media]');
       let html = `<strong>${senderLabel}:</strong> `;
 
-      if (hasMedia) {
+      if (msg.text.includes('[media]')) {
         const mediaUrl = msg.text.match(/\[media\]\((.*?)\)/)?.[1];
-        if (mediaUrl?.endsWith('.mp3') || mediaUrl?.endsWith('.wav')) {
+        if (mediaUrl.endsWith('.mp3') || mediaUrl.endsWith('.wav')) {
           html += `<audio controls src="${mediaUrl}"></audio>`;
         } else {
           html += `<img src="${mediaUrl}" style="max-width: 100%; border-radius: 8px;" />`;
         }
-
         const textPart = msg.text.split('[media]')[0].trim();
         if (textPart) html = `<strong>${senderLabel}:</strong> ${emojiify(textPart)}<br>` + html;
       } else {
@@ -128,9 +153,7 @@
       chatBox.scrollTop = chatBox.scrollHeight;
 
       if (!document.hasFocus() && !isMine) {
-        new Notification(`New message from ${msg.name}`, {
-          body: msg.text.slice(0, 60),
-        });
+        new Notification(`New message from ${msg.name}`, { body: msg.text.slice(0, 60) });
       }
     }
 
@@ -139,11 +162,6 @@
         .from('messages')
         .select('*')
         .order('timestamp', { ascending: true });
-
-      if (error) {
-        console.error('Error loading messages:', error.message);
-        return;
-      }
 
       chatBox.innerHTML = '';
 
@@ -190,18 +208,18 @@
     function setupRealtime() {
       supabase
         .channel('messages_channel')
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'messages' },
-          (payload) => {
-            const msg = payload.new;
-            const nowIST = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
-            const now = new Date(nowIST);
-            const msgTime = new Date(new Date(msg.timestamp).toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
-            const hoursDiff = (now - msgTime) / (1000 * 60 * 60);
-            if (hoursDiff <= 24) displayMessage(msg);
-          }
-        )
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+        }, (payload) => {
+          const msg = payload.new;
+          const nowIST = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+          const now = new Date(nowIST);
+          const msgTime = new Date(new Date(msg.timestamp).toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+          const hoursDiff = (now - msgTime) / (1000 * 60 * 60);
+          if (hoursDiff <= 24) displayMessage(msg);
+        })
         .subscribe();
     }
 
@@ -213,13 +231,16 @@
       Notification.requestPermission();
     }
 
-    // 🌌 Backgrounds: DARK ONLY
+    // 🌌 Custom Pinterest Backgrounds
     const backgrounds = [
-      'url("https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1950&q=80")',
-      'url("https://images.unsplash.com/photo-1503264116251-35a269479413?auto=format&fit=crop&w=1950&q=80")',
-      'url("https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1950&q=80")',
-      'url("https://images.unsplash.com/photo-1549887534-4e7a90d0a56a?auto=format&fit=crop&w=1950&q=80")',
-      'url("https://images.unsplash.com/photo-1535223289827-42f1e9919769?auto=format&fit=crop&w=1950&q=80")'
+      'url("https://i.pinimg.com/736x/89/c2/c0/89c2c07b7dd25dbf95757317b6eda179.jpg")',
+      'url("https://i.pinimg.com/736x/bc/a8/f1/bca8f1d949a5cd27f9436939136be03a.jpg")',
+      'url("https://i.pinimg.com/736x/24/39/5d/24395d2d1772d4845a98e30ec6ec60e5.jpg")',
+      'url("https://i.pinimg.com/736x/18/eb/36/18eb3674bead4442a236728e61932248.jpg")',
+      'url("https://i.pinimg.com/736x/c9/16/4d/c9164d4ed314a80b237c210aa3a2a8db.jpg")',
+      'url("https://i.pinimg.com/736x/b7/a6/78/b7a678fb0b7ef4e2a5da3cf3c1ede987.jpg")',
+      'url("https://i.pinimg.com/736x/83/77/bc/8377bc4b65bd55a9240b1b51aeda5d23.jpg")',
+      'url("https://i.pinimg.com/736x/0d/e7/99/0de799ada1243ee97afac950aa0f2328.jpg")'
     ];
     let index = 0;
     setInterval(() => {
