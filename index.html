@@ -9,34 +9,36 @@
 </head>
 <body>
 
-<!-- 🔐 Passcode -->
+<!-- 🔐 Passcode Prompt -->
 <script>
-  const code = localStorage.getItem("loveKey") || prompt("💘 Enter your secret code:");
+  const code = sessionStorage.getItem("loveKey") || prompt("💘 Enter your secret code:");
   if (code !== "moonhearts2904") {
     alert("💔 Wrong code. Access denied.");
     document.body.innerHTML = "";
   } else {
-    localStorage.setItem("loveKey", code);
+    sessionStorage.setItem("loveKey", code); // session-only storage
   }
 </script>
 
-<!-- 🔄 Reset Passcode -->
-<button id="reset-passcode" onclick="localStorage.removeItem('loveKey'); location.reload();">🔁 Reset Code</button>
+<!-- 🔁 Reset Button -->
+<button id="reset-passcode" onclick="sessionStorage.removeItem('loveKey'); location.reload();">
+  🔁 Reset Passcode
+</button>
 
 <div class="container">
   <h1>Midnight Murmurs 🌌</h1>
 
-  <!-- AUTH SECTION -->
+  <!-- 👤 AUTH SECTION -->
   <div id="auth-section">
     <input type="email" id="login-email" placeholder="Your email" />
-    <input type="password" id="login-password" value="foromandvan" style="display: none;" />
+    <input type="password" id="login-password" placeholder="Enter password" />
     <div class="button-group">
       <button id="signup-btn">🆕 Signup</button>
       <button id="login-btn">🔐 Login</button>
     </div>
   </div>
 
-  <!-- 💞 LOVEBOARD DASHBOARD -->
+  <!-- 💕 LOVEBOARD DASHBOARD -->
   <div id="loveboard" style="display: none;">
     <h2>💕 LoveBoard</h2>
     <div class="status-section">
@@ -94,7 +96,7 @@
   </div>
 </div>
 
-<!-- 🔌 SUPABASE SCRIPT -->
+<!-- 🔌 Supabase & Logic -->
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
@@ -104,59 +106,43 @@ const supabase = createClient(
 );
 
 const allowedEmails = ['vanshreekauravv07@gmail.com', 'omsonare03@gmail.com'];
-
 let senderEmail = '';
 let senderName = '';
 
 async function authenticate(isSignup) {
   const email = document.getElementById('login-email').value.trim();
-  const password = "foromandvan";
+  const password = document.getElementById('login-password').value.trim();
 
-  if (!email) return alert("Enter your email.");
-  if (!allowedEmails.includes(email)) return alert("❌ Not allowed.");
+  if (!email || !password) return alert("Please fill in both email and password.");
+  if (!allowedEmails.includes(email)) return alert("Access Denied.");
 
-  const authFn = isSignup
-    ? () => supabase.auth.signUp({ email, password })
-    : () => supabase.auth.signInWithPassword({ email, password });
+  const { error } = isSignup
+    ? await supabase.auth.signUp({ email, password })
+    : await supabase.auth.signInWithPassword({ email, password });
 
-  const { error } = await authFn();
-  if (error) {
-    if (isSignup && error.message.includes("already registered")) {
-      return authenticate(false); // fallback to login
-    }
+  if (error && isSignup && error.message.includes("already registered")) {
+    return authenticate(false); // fallback to login
+  } else if (error) {
     return alert(error.message);
   }
 
   senderEmail = email;
   senderName = prompt("What’s your name?") || "Unknown";
-  localStorage.setItem('mm_name', senderName);
-  initChat();
-  initLoveBoard();
+  initChat(); initLoveBoard();
 }
 
 document.getElementById('login-btn').onclick = () => authenticate(false);
 document.getElementById('signup-btn').onclick = () => authenticate(true);
 
-document.getElementById('logout-btn').addEventListener('click', async () => {
+document.getElementById('logout-btn').onclick = async () => {
   await supabase.auth.signOut();
   location.reload();
-});
+};
 
-async function initChat() {
-  document.getElementById('auth-section').style.display = 'none';
-  document.getElementById('chat-section').style.display = 'block';
-  loadMessages();
-  setupRealtime();
-}
-
+// 🧠 LoveBoard Init
 async function initLoveBoard() {
   document.getElementById('loveboard').style.display = 'block';
 
-  // Load partner status
-  const { data, error } = await supabase.from('love_status').select('*').neq('email', senderEmail).limit(1);
-  if (data?.length) displayPartnerStatus(data[0]);
-
-  // Load self status
   const { data: me } = await supabase.from('love_status').select('*').eq('email', senderEmail).limit(1);
   if (me?.length) {
     document.getElementById('love-name').value = me[0].name || '';
@@ -166,16 +152,19 @@ async function initLoveBoard() {
     document.getElementById('listening-input').value = me[0].listening || '';
     document.getElementById('quote-input').value = me[0].quote || '';
   }
+
+  const { data } = await supabase.from('love_status').select('*').neq('email', senderEmail).limit(1);
+  if (data?.length) displayPartnerStatus(data[0]);
 }
 
 document.querySelectorAll('.mood-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
+  btn.onclick = () => {
     document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-  });
+  };
 });
 
-document.getElementById('save-loveboard').addEventListener('click', async () => {
+document.getElementById('save-loveboard').onclick = async () => {
   const mood = document.querySelector('.mood-btn.active')?.textContent || '';
   const name = document.getElementById('love-name').value;
   const doing = document.getElementById('doing-input').value;
@@ -185,19 +174,12 @@ document.getElementById('save-loveboard').addEventListener('click', async () => 
   const quote = document.getElementById('quote-input').value;
 
   await supabase.from('love_status').upsert([{
-    email: senderEmail,
-    name,
-    mood,
-    doing,
-    craving,
-    watching,
-    listening,
-    quote,
+    email: senderEmail, name, mood, doing, craving, watching, listening, quote,
     updated_at: new Date()
   }]);
 
-  alert("💾 Saved!");
-});
+  alert("Status saved!");
+};
 
 function displayPartnerStatus(status) {
   document.getElementById('partner-name').textContent = status.name || '';
@@ -209,45 +191,21 @@ function displayPartnerStatus(status) {
   document.getElementById('partner-quote').textContent = status.quote || '';
 }
 
-// === CHAT LOGIC ===
-
-function emojiify(text) {
-  return text
-    .replace(/:heart:/g, "❤️")
-    .replace(/:kiss:/g, "😘")
-    .replace(/:star:/g, "⭐")
-    .replace(/:fire:/g, "🔥")
-    .replace(/:moon:/g, "🌙")
-    .replace(/:hug:/g, "🤗");
-}
-
+// 💬 Chat
 function displayMessage(msg) {
+  const chatBox = document.getElementById('chat-box');
   const div = document.createElement('div');
   const isMine = msg.name === senderName;
   const senderLabel = isMine ? "🧑‍💻 You" : `💌 ${msg.name}`;
   div.className = isMine ? "message you" : "message them";
-  let html = `<strong>${senderLabel}:</strong> `;
-
-  if (msg.text.includes('[media]')) {
-    const mediaUrl = msg.text.match(/\[media\]\((.*?)\)/)?.[1];
-    if (mediaUrl.endsWith('.mp3') || mediaUrl.endsWith('.wav')) {
-      html += `<audio controls src="${mediaUrl}"></audio>`;
-    } else {
-      html += `<img src="${mediaUrl}" style="max-width: 100%; border-radius: 8px;" />`;
-    }
-    const textPart = msg.text.split('[media]')[0].trim();
-    if (textPart) html = `<strong>${senderLabel}:</strong> ${emojiify(textPart)}<br>` + html;
-  } else {
-    html += emojiify(msg.text);
-  }
-
-  div.innerHTML = html;
+  div.innerHTML = `<strong>${senderLabel}:</strong> ${msg.text}`;
   chatBox.appendChild(div);
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
 async function loadMessages() {
-  const { data, error } = await supabase.from('messages').select('*').order('timestamp', { ascending: true });
+  const { data } = await supabase.from('messages').select('*').order('timestamp', { ascending: true });
+  const chatBox = document.getElementById('chat-box');
   chatBox.innerHTML = '';
   const now = new Date();
   data.forEach(msg => {
@@ -257,8 +215,10 @@ async function loadMessages() {
   });
 }
 
-document.getElementById('message-form').addEventListener('submit', async (e) => {
+document.getElementById('message-form').onsubmit = async (e) => {
   e.preventDefault();
+  const input = document.getElementById('message-input');
+  const fileInput = document.getElementById('file-input');
   const text = input.value.trim();
   const file = fileInput.files[0];
   let fileUrl = null;
@@ -272,59 +232,56 @@ document.getElementById('message-form').addEventListener('submit', async (e) => 
     }
   }
 
-  const finalMessage = fileUrl
-    ? (text ? `${text} [media](${fileUrl})` : `[media](${fileUrl})`)
-    : text;
-
+  const finalMessage = fileUrl ? (text ? `${text} [media](${fileUrl})` : `[media](${fileUrl})`) : text;
   await supabase.from('messages').insert([{ text: finalMessage, name: senderName }]);
-  input.value = '';
-  fileInput.value = '';
-});
+  input.value = ''; fileInput.value = '';
+};
 
 function setupRealtime() {
-  supabase.channel('messages_channel').on('postgres_changes', {
-    event: 'INSERT',
-    schema: 'public',
-    table: 'messages',
-  }, (payload) => {
-    const msg = payload.new;
-    const now = new Date();
-    const msgTime = new Date(msg.timestamp);
-    const hoursDiff = (now - msgTime) / 36e5;
-    if (hoursDiff <= 24) displayMessage(msg);
-  }).subscribe();
+  supabase.channel('messages_channel')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+      const msg = payload.new;
+      const msgTime = new Date(msg.timestamp);
+      const hoursDiff = (new Date() - msgTime) / 36e5;
+      if (hoursDiff <= 24) displayMessage(msg);
+    })
+    .subscribe();
+}
+
+async function initChat() {
+  document.getElementById('auth-section').style.display = 'none';
+  document.getElementById('chat-section').style.display = 'block';
+  loadMessages();
+  setupRealtime();
 }
 
 supabase.auth.getSession().then(({ data: { session } }) => {
   if (session?.user) {
     senderEmail = session.user.email;
-    senderName = prompt("Your name:") || "Unknown";
-    localStorage.setItem('mm_name', senderName);
-    initChat();
-    initLoveBoard();
+    senderName = prompt("What’s your name?") || "Unknown";
+    initChat(); initLoveBoard();
   }
 });
 
-if (Notification.permission !== 'granted') {
-  Notification.requestPermission();
-}
-
-// 🌌 Rotating Backgrounds (your Pinterest aesthetic)
+// 🌌 Rotating Backgrounds
 const backgrounds = [
   'url("https://i.pinimg.com/736x/89/c2/c0/89c2c07b7dd25dbf95757317b6eda179.jpg")',
   'url("https://i.pinimg.com/736x/bc/a8/f1/bca8f1d949a5cd27f9436939136be03a.jpg")',
   'url("https://i.pinimg.com/736x/24/39/5d/24395d2d1772d4845a98e30ec6ec60e5.jpg")',
-  'url("https://i.pinimg.com/736x/18/eb/36/18eb3674bead4442a236728e61932248.jpg")',
-  'url("https://i.pinimg.com/736x/c9/16/4d/c9164d4ed314a80b237c210aa3a2a8db.jpg")',
-  'url("https://i.pinimg.com/736x/b7/a6/78/b7a678fb0b7ef4e2a5da3cf3c1ede987.jpg")',
-  'url("https://i.pinimg.com/736x/83/77/bc/8377bc4b65bd55a9240b1b51aeda5d23.jpg")',
-  'url("https://i.pinimg.com/736x/0d/e7/99/0de799ada1243ee97afac950aa0f2328.jpg")'
+  'url("https://i.pinimg.com/736x/18/eb/36/18eb3674bead4442a236728e61932248.jpg")'
 ];
 let index = 0;
 setInterval(() => {
   document.body.style.backgroundImage = backgrounds[index % backgrounds.length];
   index++;
 }, 5000);
+
+// 🧹 Force Logout & Cleanup on Tab Close
+window.addEventListener("beforeunload", () => {
+  supabase.auth.signOut();
+  sessionStorage.removeItem("loveKey");
+  localStorage.removeItem("mm_name");
+});
 </script>
 </body>
 </html>
