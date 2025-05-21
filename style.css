@@ -148,6 +148,73 @@ input[type="file"] {
   font-size: 0.9em;
 }
 
+/* === LOVEBOARD === */
+#loveboard {
+  margin-top: 20px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+}
+
+#loveboard h2 {
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+  color: #ffc8ff;
+  text-align: center;
+}
+
+.status-section label {
+  font-weight: bold;
+  margin-top: 10px;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.status-section input {
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+.emoji-options {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.mood-btn {
+  font-size: 1.4em;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.mood-btn.active,
+.mood-btn:hover {
+  background-color: #ff91f6;
+  transform: scale(1.2);
+}
+
+#partner-status {
+  margin-top: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 15px;
+  border-radius: 10px;
+}
+
+#partner-status h3 {
+  text-align: center;
+  color: #fff;
+  margin-bottom: 10px;
+}
+
 /* === RESPONSIVE === */
 @media (max-width: 600px) {
   .container {

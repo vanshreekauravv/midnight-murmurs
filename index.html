@@ -9,244 +9,322 @@
 </head>
 <body>
 
-  <!-- 🔐 Passcode Protection -->
-  <script>
-    const code = localStorage.getItem("loveKey") || prompt("💘 Enter your secret code:");
-    if (code !== "moonhearts2904") {
-      alert("💔 Wrong code. Access denied.");
-      document.body.innerHTML = "";
-    } else {
-      localStorage.setItem("loveKey", code);
-    }
-  </script>
+<!-- 🔐 Passcode -->
+<script>
+  const code = localStorage.getItem("loveKey") || prompt("💘 Enter your secret code:");
+  if (code !== "moonhearts2904") {
+    alert("💔 Wrong code. Access denied.");
+    document.body.innerHTML = "";
+  } else {
+    localStorage.setItem("loveKey", code);
+  }
+</script>
 
-  <!-- 🔄 Reset Passcode Button -->
-  <button id="reset-passcode" onclick="localStorage.removeItem('loveKey'); location.reload();">🔁 Reset Code</button>
+<!-- 🔄 Reset Passcode -->
+<button id="reset-passcode" onclick="localStorage.removeItem('loveKey'); location.reload();">🔁 Reset Code</button>
 
-  <div class="container">
-    <h1>Midnight Murmurs 🌌</h1>
+<div class="container">
+  <h1>Midnight Murmurs 🌌</h1>
 
-    <!-- AUTH -->
-    <div id="auth-section">
-      <input type="email" id="login-email" placeholder="Your email" />
-      <input type="password" id="login-password" placeholder="Password" />
-      <div class="button-group">
-        <button id="login-btn">🔐 Login</button>
-        <button id="signup-btn">🆕 Signup</button>
-      </div>
-    </div>
-
-    <!-- CHAT -->
-    <div id="chat-section" style="display: none;">
-      <div id="chat-box" class="chat-box"></div>
-      <form id="message-form">
-        <input type="text" id="message-input" placeholder="Whisper something sweet..." />
-        <input type="file" id="file-input" accept="image/*,audio/*" />
-        <button type="submit">💬 Send</button>
-      </form>
-      <button id="logout-btn">🚪 Logout</button>
+  <!-- AUTH SECTION -->
+  <div id="auth-section">
+    <input type="email" id="login-email" placeholder="Your email" />
+    <input type="password" id="login-password" value="foromandvan" style="display: none;" />
+    <div class="button-group">
+      <button id="signup-btn">🆕 Signup</button>
+      <button id="login-btn">🔐 Login</button>
     </div>
   </div>
 
-  <!-- ✨ Supabase Chat Script -->
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+  <!-- 💞 LOVEBOARD DASHBOARD -->
+  <div id="loveboard" style="display: none;">
+    <h2>💕 LoveBoard</h2>
+    <div class="status-section">
+      <label>Your Name:</label>
+      <input type="text" id="love-name" placeholder="Enter your name" />
 
-    const supabase = createClient(
-      'https://igtujbdtcaixjwffwsti.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlndHVqYmR0Y2FpeGp3ZmZ3c3RpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3NTY4NjcsImV4cCI6MjA2MzMzMjg2N30.ppv_c3Q5-9YaUBXUfw-dHEHKEfzDnhCjfXMqW2Fme1A'
-    );
+      <label>Mood:</label>
+      <div class="emoji-options">
+        <button class="mood-btn">😊</button>
+        <button class="mood-btn">😢</button>
+        <button class="mood-btn">😡</button>
+        <button class="mood-btn">😍</button>
+        <button class="mood-btn">🥺</button>
+        <button class="mood-btn">😴</button>
+      </div>
 
-    const authSection = document.getElementById('auth-section');
-    const chatSection = document.getElementById('chat-section');
-    const chatBox = document.getElementById('chat-box');
-    const form = document.getElementById('message-form');
-    const input = document.getElementById('message-input');
-    const fileInput = document.getElementById('file-input');
-    const loginBtn = document.getElementById('login-btn');
-    const signupBtn = document.getElementById('signup-btn');
-    const logoutBtn = document.getElementById('logout-btn');
+      <label>What are you doing now?</label>
+      <input type="text" id="doing-input" placeholder="e.g., working, chilling..." />
 
-    let senderName = localStorage.getItem('mm_name');
-    if (!senderName) {
-      senderName = prompt("What's your name?");
-      localStorage.setItem('mm_name', senderName);
+      <label>What are you craving?</label>
+      <input type="text" id="craving-input" placeholder="e.g., fries, a hug..." />
+
+      <label>Watching:</label>
+      <input type="text" id="watching-input" placeholder="Netflix? YouTube?" />
+
+      <label>Listening:</label>
+      <input type="text" id="listening-input" placeholder="Song, podcast?" />
+
+      <label>Quote of the Day:</label>
+      <input type="text" id="quote-input" placeholder="Add something meaningful..." />
+
+      <button id="save-loveboard">💾 Save Status</button>
+    </div>
+
+    <div id="partner-status">
+      <h3>💖 Partner’s Status</h3>
+      <p><strong>Name:</strong> <span id="partner-name"></span></p>
+      <p><strong>Mood:</strong> <span id="partner-mood"></span></p>
+      <p><strong>Doing:</strong> <span id="partner-doing"></span></p>
+      <p><strong>Craving:</strong> <span id="partner-craving"></span></p>
+      <p><strong>Watching:</strong> <span id="partner-watching"></span></p>
+      <p><strong>Listening:</strong> <span id="partner-listening"></span></p>
+      <p><strong>Quote:</strong> <span id="partner-quote"></span></p>
+    </div>
+  </div>
+  <!-- 💬 CHAT SECTION -->
+  <div id="chat-section" style="display: none;">
+    <div id="chat-box" class="chat-box"></div>
+    <form id="message-form">
+      <input type="text" id="message-input" placeholder="Whisper something sweet..." />
+      <input type="file" id="file-input" accept="image/*,audio/*" />
+      <button type="submit">💬 Send</button>
+    </form>
+    <button id="logout-btn">🚪 Logout</button>
+  </div>
+</div>
+
+<!-- 🔌 SUPABASE SCRIPT -->
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+const supabase = createClient(
+  'https://igtujbdtcaixjwffwsti.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlndHVqYmR0Y2FpeGp3ZmZ3c3RpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3NTY4NjcsImV4cCI6MjA2MzMzMjg2N30.ppv_c3Q5-9YaUBXUfw-dHEHKEfzDnhCjfXMqW2Fme1A'
+);
+
+const allowedEmails = ['vanshreekauravv07@gmail.com', 'omsonare03@gmail.com'];
+
+let senderEmail = '';
+let senderName = '';
+
+async function authenticate(isSignup) {
+  const email = document.getElementById('login-email').value.trim();
+  const password = "foromandvan";
+
+  if (!email) return alert("Enter your email.");
+  if (!allowedEmails.includes(email)) return alert("❌ Not allowed.");
+
+  const authFn = isSignup
+    ? () => supabase.auth.signUp({ email, password })
+    : () => supabase.auth.signInWithPassword({ email, password });
+
+  const { error } = await authFn();
+  if (error) {
+    if (isSignup && error.message.includes("already registered")) {
+      return authenticate(false); // fallback to login
     }
+    return alert(error.message);
+  }
 
-    const allowedEmails = ['vanshreekauravv07@gmail.com', 'Omsonare03@gmail.com'];
+  senderEmail = email;
+  senderName = prompt("What’s your name?") || "Unknown";
+  localStorage.setItem('mm_name', senderName);
+  initChat();
+  initLoveBoard();
+}
 
-    loginBtn.addEventListener('click', async () => {
-      const email = document.getElementById('login-email').value.trim();
-      const password = document.getElementById('login-password').value.trim();
+document.getElementById('login-btn').onclick = () => authenticate(false);
+document.getElementById('signup-btn').onclick = () => authenticate(true);
 
-      if (!email || !password) return alert("Enter both fields.");
-      if (!allowedEmails.includes(email)) return alert("❌ Access denied: Not an allowed user.");
+document.getElementById('logout-btn').addEventListener('click', async () => {
+  await supabase.auth.signOut();
+  location.reload();
+});
 
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) return alert("Login failed: " + error.message);
+async function initChat() {
+  document.getElementById('auth-section').style.display = 'none';
+  document.getElementById('chat-section').style.display = 'block';
+  loadMessages();
+  setupRealtime();
+}
 
-      initChat();
-    });
+async function initLoveBoard() {
+  document.getElementById('loveboard').style.display = 'block';
 
-    signupBtn.addEventListener('click', async () => {
-      const email = document.getElementById('login-email').value.trim();
-      const password = document.getElementById('login-password').value.trim();
+  // Load partner status
+  const { data, error } = await supabase.from('love_status').select('*').neq('email', senderEmail).limit(1);
+  if (data?.length) displayPartnerStatus(data[0]);
 
-      if (!email || !password) return alert("Enter both fields.");
-      if (!allowedEmails.includes(email)) return alert("❌ Signup blocked: You’re not on the lovers list.");
+  // Load self status
+  const { data: me } = await supabase.from('love_status').select('*').eq('email', senderEmail).limit(1);
+  if (me?.length) {
+    document.getElementById('love-name').value = me[0].name || '';
+    document.getElementById('doing-input').value = me[0].doing || '';
+    document.getElementById('craving-input').value = me[0].craving || '';
+    document.getElementById('watching-input').value = me[0].watching || '';
+    document.getElementById('listening-input').value = me[0].listening || '';
+    document.getElementById('quote-input').value = me[0].quote || '';
+  }
+}
 
-      const { error } = await supabase.auth.signUp({ email, password });
-      if (error) return alert("Signup failed: " + error.message);
+document.querySelectorAll('.mood-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
 
-      initChat();
-    });
+document.getElementById('save-loveboard').addEventListener('click', async () => {
+  const mood = document.querySelector('.mood-btn.active')?.textContent || '';
+  const name = document.getElementById('love-name').value;
+  const doing = document.getElementById('doing-input').value;
+  const craving = document.getElementById('craving-input').value;
+  const watching = document.getElementById('watching-input').value;
+  const listening = document.getElementById('listening-input').value;
+  const quote = document.getElementById('quote-input').value;
 
-    logoutBtn.addEventListener('click', async () => {
-      await supabase.auth.signOut();
-      location.reload();
-    });
+  await supabase.from('love_status').upsert([{
+    email: senderEmail,
+    name,
+    mood,
+    doing,
+    craving,
+    watching,
+    listening,
+    quote,
+    updated_at: new Date()
+  }]);
 
-    async function initChat() {
-      const session = await supabase.auth.getSession();
-      if (!session.data.session) return;
+  alert("💾 Saved!");
+});
 
-      authSection.style.display = 'none';
-      chatSection.style.display = 'block';
+function displayPartnerStatus(status) {
+  document.getElementById('partner-name').textContent = status.name || '';
+  document.getElementById('partner-mood').textContent = status.mood || '';
+  document.getElementById('partner-doing').textContent = status.doing || '';
+  document.getElementById('partner-craving').textContent = status.craving || '';
+  document.getElementById('partner-watching').textContent = status.watching || '';
+  document.getElementById('partner-listening').textContent = status.listening || '';
+  document.getElementById('partner-quote').textContent = status.quote || '';
+}
 
-      loadMessages();
-      setupRealtime();
+// === CHAT LOGIC ===
+
+function emojiify(text) {
+  return text
+    .replace(/:heart:/g, "❤️")
+    .replace(/:kiss:/g, "😘")
+    .replace(/:star:/g, "⭐")
+    .replace(/:fire:/g, "🔥")
+    .replace(/:moon:/g, "🌙")
+    .replace(/:hug:/g, "🤗");
+}
+
+function displayMessage(msg) {
+  const div = document.createElement('div');
+  const isMine = msg.name === senderName;
+  const senderLabel = isMine ? "🧑‍💻 You" : `💌 ${msg.name}`;
+  div.className = isMine ? "message you" : "message them";
+  let html = `<strong>${senderLabel}:</strong> `;
+
+  if (msg.text.includes('[media]')) {
+    const mediaUrl = msg.text.match(/\[media\]\((.*?)\)/)?.[1];
+    if (mediaUrl.endsWith('.mp3') || mediaUrl.endsWith('.wav')) {
+      html += `<audio controls src="${mediaUrl}"></audio>`;
+    } else {
+      html += `<img src="${mediaUrl}" style="max-width: 100%; border-radius: 8px;" />`;
     }
+    const textPart = msg.text.split('[media]')[0].trim();
+    if (textPart) html = `<strong>${senderLabel}:</strong> ${emojiify(textPart)}<br>` + html;
+  } else {
+    html += emojiify(msg.text);
+  }
 
-    function emojiify(text) {
-      return text
-        .replace(/:heart:/g, "❤️")
-        .replace(/:kiss:/g, "😘")
-        .replace(/:star:/g, "⭐")
-        .replace(/:fire:/g, "🔥")
-        .replace(/:moon:/g, "🌙")
-        .replace(/:hug:/g, "🤗");
+  div.innerHTML = html;
+  chatBox.appendChild(div);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+async function loadMessages() {
+  const { data, error } = await supabase.from('messages').select('*').order('timestamp', { ascending: true });
+  chatBox.innerHTML = '';
+  const now = new Date();
+  data.forEach(msg => {
+    const msgTime = new Date(msg.timestamp);
+    const hoursDiff = (now - msgTime) / 36e5;
+    if (hoursDiff <= 24) displayMessage(msg);
+  });
+}
+
+document.getElementById('message-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const text = input.value.trim();
+  const file = fileInput.files[0];
+  let fileUrl = null;
+
+  if (file) {
+    const filePath = `${Date.now()}_${file.name}`;
+    const { error: uploadError } = await supabase.storage.from('media').upload(filePath, file, { upsert: true });
+    if (!uploadError) {
+      const { data } = supabase.storage.from('media').getPublicUrl(filePath);
+      fileUrl = data.publicUrl;
     }
+  }
 
-    function displayMessage(msg) {
-      const div = document.createElement('div');
-      const isMine = msg.name === senderName;
-      const senderLabel = isMine ? "🧑‍💻 You" : `💌 ${msg.name}`;
-      div.className = isMine ? "message you" : "message them";
+  const finalMessage = fileUrl
+    ? (text ? `${text} [media](${fileUrl})` : `[media](${fileUrl})`)
+    : text;
 
-      let html = `<strong>${senderLabel}:</strong> `;
+  await supabase.from('messages').insert([{ text: finalMessage, name: senderName }]);
+  input.value = '';
+  fileInput.value = '';
+});
 
-      if (msg.text.includes('[media]')) {
-        const mediaUrl = msg.text.match(/\[media\]\((.*?)\)/)?.[1];
-        if (mediaUrl.endsWith('.mp3') || mediaUrl.endsWith('.wav')) {
-          html += `<audio controls src="${mediaUrl}"></audio>`;
-        } else {
-          html += `<img src="${mediaUrl}" style="max-width: 100%; border-radius: 8px;" />`;
-        }
-        const textPart = msg.text.split('[media]')[0].trim();
-        if (textPart) html = `<strong>${senderLabel}:</strong> ${emojiify(textPart)}<br>` + html;
-      } else {
-        html += emojiify(msg.text);
-      }
+function setupRealtime() {
+  supabase.channel('messages_channel').on('postgres_changes', {
+    event: 'INSERT',
+    schema: 'public',
+    table: 'messages',
+  }, (payload) => {
+    const msg = payload.new;
+    const now = new Date();
+    const msgTime = new Date(msg.timestamp);
+    const hoursDiff = (now - msgTime) / 36e5;
+    if (hoursDiff <= 24) displayMessage(msg);
+  }).subscribe();
+}
 
-      div.innerHTML = html;
-      chatBox.appendChild(div);
-      chatBox.scrollTop = chatBox.scrollHeight;
+supabase.auth.getSession().then(({ data: { session } }) => {
+  if (session?.user) {
+    senderEmail = session.user.email;
+    senderName = prompt("Your name:") || "Unknown";
+    localStorage.setItem('mm_name', senderName);
+    initChat();
+    initLoveBoard();
+  }
+});
 
-      if (!document.hasFocus() && !isMine) {
-        new Notification(`New message from ${msg.name}`, { body: msg.text.slice(0, 60) });
-      }
-    }
+if (Notification.permission !== 'granted') {
+  Notification.requestPermission();
+}
 
-    async function loadMessages() {
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .order('timestamp', { ascending: true });
-
-      chatBox.innerHTML = '';
-
-      const nowIST = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
-      const now = new Date(nowIST);
-
-      data.forEach(msg => {
-        const msgTime = new Date(new Date(msg.timestamp).toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
-        const hoursDiff = (now - msgTime) / (1000 * 60 * 60);
-        if (hoursDiff <= 24) displayMessage(msg);
-      });
-    }
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const text = input.value.trim();
-      const file = fileInput.files[0];
-      let fileUrl = null;
-
-      if (file) {
-        const filePath = `${Date.now()}_${file.name}`;
-        const { error: uploadError } = await supabase.storage
-          .from('media')
-          .upload(filePath, file, { upsert: true });
-
-        if (!uploadError) {
-          const { data } = supabase.storage.from('media').getPublicUrl(filePath);
-          fileUrl = data.publicUrl;
-        }
-      }
-
-      if (!text && !fileUrl) return;
-
-      const finalMessage = fileUrl
-        ? (text ? `${text} [media](${fileUrl})` : `[media](${fileUrl})`)
-        : text;
-
-      await supabase.from('messages').insert([{ text: finalMessage, name: senderName }]);
-
-      input.value = '';
-      fileInput.value = '';
-    });
-
-    function setupRealtime() {
-      supabase
-        .channel('messages_channel')
-        .on('postgres_changes', {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-        }, (payload) => {
-          const msg = payload.new;
-          const nowIST = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
-          const now = new Date(nowIST);
-          const msgTime = new Date(new Date(msg.timestamp).toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
-          const hoursDiff = (now - msgTime) / (1000 * 60 * 60);
-          if (hoursDiff <= 24) displayMessage(msg);
-        })
-        .subscribe();
-    }
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) initChat();
-    });
-
-    if (Notification.permission !== 'granted') {
-      Notification.requestPermission();
-    }
-
-    // 🌌 Custom Pinterest Backgrounds
-    const backgrounds = [
-      'url("https://i.pinimg.com/736x/89/c2/c0/89c2c07b7dd25dbf95757317b6eda179.jpg")',
-      'url("https://i.pinimg.com/736x/bc/a8/f1/bca8f1d949a5cd27f9436939136be03a.jpg")',
-      'url("https://i.pinimg.com/736x/24/39/5d/24395d2d1772d4845a98e30ec6ec60e5.jpg")',
-      'url("https://i.pinimg.com/736x/18/eb/36/18eb3674bead4442a236728e61932248.jpg")',
-      'url("https://i.pinimg.com/736x/c9/16/4d/c9164d4ed314a80b237c210aa3a2a8db.jpg")',
-      'url("https://i.pinimg.com/736x/b7/a6/78/b7a678fb0b7ef4e2a5da3cf3c1ede987.jpg")',
-      'url("https://i.pinimg.com/736x/83/77/bc/8377bc4b65bd55a9240b1b51aeda5d23.jpg")',
-      'url("https://i.pinimg.com/736x/0d/e7/99/0de799ada1243ee97afac950aa0f2328.jpg")'
-    ];
-    let index = 0;
-    setInterval(() => {
-      document.body.style.backgroundImage = backgrounds[index % backgrounds.length];
-      index++;
-    }, 5000);
-  </script>
+// 🌌 Rotating Backgrounds (your Pinterest aesthetic)
+const backgrounds = [
+  'url("https://i.pinimg.com/736x/89/c2/c0/89c2c07b7dd25dbf95757317b6eda179.jpg")',
+  'url("https://i.pinimg.com/736x/bc/a8/f1/bca8f1d949a5cd27f9436939136be03a.jpg")',
+  'url("https://i.pinimg.com/736x/24/39/5d/24395d2d1772d4845a98e30ec6ec60e5.jpg")',
+  'url("https://i.pinimg.com/736x/18/eb/36/18eb3674bead4442a236728e61932248.jpg")',
+  'url("https://i.pinimg.com/736x/c9/16/4d/c9164d4ed314a80b237c210aa3a2a8db.jpg")',
+  'url("https://i.pinimg.com/736x/b7/a6/78/b7a678fb0b7ef4e2a5da3cf3c1ede987.jpg")',
+  'url("https://i.pinimg.com/736x/83/77/bc/8377bc4b65bd55a9240b1b51aeda5d23.jpg")',
+  'url("https://i.pinimg.com/736x/0d/e7/99/0de799ada1243ee97afac950aa0f2328.jpg")'
+];
+let index = 0;
+setInterval(() => {
+  document.body.style.backgroundImage = backgrounds[index % backgrounds.length];
+  index++;
+}, 5000);
+</script>
 </body>
 </html>
